@@ -1,4 +1,4 @@
-!/bin/bash
+#!/bin/bash
 
 # Author: Domantas Giedraitis
 # Date: 14/11/2020
