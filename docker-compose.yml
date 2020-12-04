@@ -26,23 +26,6 @@ services:
     networks:
       - mycarboot
 
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin:5
-    container_name: mycarboot-phpadmin
-    environment:
-      PMA_HOST: db
-    restart: always
-    ports:
-      - "8080:80"
-    volumes:
-      - /sessions
-    depends_on:
-      - db
-    links:
-      - db
-    networks:
-      - mycarboot
-
   nginx:
     image: nginx:alpine
     container_name: mycarboot-nginx
@@ -60,7 +43,7 @@ services:
       context: .
       dockerfile: node.dockerfile
     container_name: npm
-    restart: always
+    restart: unless-stopped
     ports:
       - "9090:80"
     volumes:
