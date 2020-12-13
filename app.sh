@@ -1,5 +1,8 @@
 #!/bin/bash
 #
+# Author: Domantas Giedraitis
+# Date: 14/11/2020
+# Version: 0.1
 #
 # Author:	Domantas Giedraitis
 #
