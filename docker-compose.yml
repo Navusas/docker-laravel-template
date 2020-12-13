@@ -1,83 +1,78 @@
 version: "3.7"
+
 services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./src:/var/www
+      - ./.docker/nginx:/etc/nginx/conf.d/
+    depends_on:
+      - app
+      - mysql
+    networks:
+      - laravelapp
+
+  mysql:
+    image: mysql:5.7
+    container_name: mysql
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3366:3306"
+    env_file:
+      - .env
+    environment:
+      MYSQL_DATABASE: "${DB_DATABASE}"
+      MYSQL_USER: "${DB_USERNAME}"
+      MYSQL_PASSWORD: "${DB_PASSWORD}"
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD}"
+      SERVICE_TAGS: "${SERVICE_TAGS}"
+      SERVICE_NAME: "${SERVICE_NAME}"
+    volumes:
+      - ./.docker/mysql:/docker-entrypoint-initdb.d
+      - dbdata:/var/lib/mysql/
+    networks:
+      - laravelapp
+
   app:
     build:
       args:
         user: laravel
         uid: 1000
-      context: ./
+      context: .
       dockerfile: Dockerfile
-    image: mycarboot
-    container_name: mycarboot-app
-    restart: unless-stopped
+    container_name: app
     working_dir: /var/www/
     volumes:
-      - ./:/var/www
+      - ./src:/var/www
     networks:
-      - mycarboot
-
-  db:
-    image: mysql:5.7
-    container_name: mycarboot-db
-    restart: unless-stopped
-    volumes:
-      - ./.docker/mysql:/docker-entrypoint-initdb.d
-      - dbdata:/var/lib/mysql/
-    networks:
-      - mycarboot
-
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin:5
-    container_name: mycarboot-phpadmin
-    environment:
-      PMA_HOST: db
-    restart: always
-    ports:
-      - "8080:80"
-    volumes:
-      - /sessions
-    depends_on:
-      - db
-    links:
-      - db
-    networks:
-      - mycarboot
-
-  nginx:
-    image: nginx:alpine
-    container_name: mycarboot-nginx
-    restart: unless-stopped
-    ports:
-      - "8000:80"
-    volumes:
-      - ./:/var/www
-      - ./.docker/nginx:/etc/nginx/conf.d/
-    networks:
-      - mycarboot
+      - laravelapp
 
   npm:
     build:
       context: .
       dockerfile: node.dockerfile
     container_name: npm
-    restart: always
+    restart: on-failure
     ports:
       - "9090:80"
     volumes:
-      - ./:/var/www
+      - ./src:/var/www
     working_dir: /var/www
-    command:  npm run dev --watch
-    links:
-      - app
+    command: "npm run watch"
     depends_on:
       - app
     networks:
-      - mycarboot
+      - laravelapp
 
 volumes:
   dbdata:
     driver: local
 
 networks:
-  mycarboot:
+  laravelapp:
     driver: bridge
