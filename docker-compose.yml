@@ -1,6 +1,21 @@
 version: "3.7"
 
 services:
+  app:
+    build:
+      args:
+        user: mytrack
+        uid: 1000
+      context: .
+      dockerfile: .docker/php.dockerfile
+    container_name: app
+    restart: unless-stopped
+    working_dir: /var/www/
+    volumes:
+      - ./src:/var/www
+    networks:
+      - myTrack
+
   nginx:
     image: nginx:alpine
     container_name: nginx
@@ -14,7 +29,7 @@ services:
       - app
       - mysql
     networks:
-      - laravelapp
+      - myTrack
 
   mysql:
     image: mysql:5.7
@@ -22,9 +37,7 @@ services:
     restart: unless-stopped
     tty: true
     ports:
-      - "3366:3306"
-    env_file:
-      - .env
+      - "33006:3306"
     environment:
       MYSQL_DATABASE: "${DB_DATABASE}"
       MYSQL_USER: "${DB_USERNAME}"
@@ -36,43 +49,25 @@ services:
       - ./.docker/mysql:/docker-entrypoint-initdb.d
       - dbdata:/var/lib/mysql/
     networks:
-      - laravelapp
-
-  app:
-    build:
-      args:
-        user: laravel
-        uid: 1000
-      context: .
-      dockerfile: Dockerfile
-    container_name: app
-    working_dir: /var/www/
-    volumes:
-      - ./src:/var/www
-    networks:
-      - laravelapp
+      - myTrack
 
   npm:
-    build:
-      context: .
-      dockerfile: node.dockerfile
+    image: node:latest
     container_name: npm
     restart: on-failure
-    ports:
-      - "9090:80"
+    working_dir: /var/www
     volumes:
       - ./src:/var/www
-    working_dir: /var/www
-    command: "npm run watch"
+    command: "npm install"
     depends_on:
       - app
     networks:
-      - laravelapp
+      - myTrack
 
 volumes:
   dbdata:
     driver: local
 
 networks:
-  laravelapp:
+  myTrack:
     driver: bridge
